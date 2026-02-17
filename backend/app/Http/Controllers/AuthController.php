@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\RegisterResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Resources\RegisterResource;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -19,15 +19,16 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|unique:users',
-            'email' => 'required|email|unqiue:users',
+            'username' => 'required|string|unique:users',
+            'email' => 'required|email|unique:users',
             'password' => 'required|min:6'
         ]);
 
         $user = User::create([
-            'name' => $request->name,
+            'username' => $request->username,
             'email' => $request->email,
-            'password' => Hash::make($request->password)
+            'password' => Hash::make($request->password),
+            'role' => 'user'
         ]);
 
         return response()->json([
@@ -39,13 +40,13 @@ class AuthController extends Controller
     public function admin(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|unique:users',
+            'username' => 'required|string|unique:users',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:6'
         ]);
 
         $admin = User::create([
-            'name' => $request->name,
+            'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => 'admin'
@@ -60,13 +61,13 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'name' => 'required|string',
+            'username' => 'required|string',
             'password' => 'required|string'
         ]);
 
-        $user = User::where('name', $request->name)->first();
+        $user = User::where('username', $request->username)->first();
 
-        if (!$user || Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'message' => ['Username atau password salah']
             ]);
