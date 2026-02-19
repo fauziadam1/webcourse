@@ -25,6 +25,26 @@ class User extends Authenticatable
         'role'
     ];
 
+    public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
+    public function completions()
+    {
+        return $this->hasMany(Completion::class);
+    }
+
+    public function results()
+    {
+        return $this->hasMany(Result::class);
+    }
+
+    public function certificates()
+    {
+        return $this->hasMany(Certificate::class);
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *

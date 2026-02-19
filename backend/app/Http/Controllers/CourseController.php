@@ -22,11 +22,20 @@ class CourseController extends Controller
         return CourseShowUserResource::collection($course);
     }
 
+    public function show($id)
+    {
+        $course = Course::findOrFail($id);
+
+        return response()->json([
+            'data' => $course
+        ]);
+    }
+
     public function store(Request $request)
     {
         if (!$request->user() || $request->user()->role !== 'admin') {
             return response()->json([
-                'message' => 'Anda bukan admin'
+                'message' => 'Admin only'
             ], 403);
         }
 
@@ -43,7 +52,7 @@ class CourseController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Course berhasil dibuat',
+            'message' => 'Course created',
             'data' => $course
         ]);
     }
@@ -52,7 +61,7 @@ class CourseController extends Controller
     {
         if (!$request->user() || $request->user()->role !== 'admin') {
             return response()->json([
-                'message' => 'Anda bukan admin'
+                'message' => 'Admin only'
             ], 403);
         }
 
@@ -60,27 +69,29 @@ class CourseController extends Controller
 
         $request->validate([
             'title' => 'sometimes|required|string',
-            'description' => 'sometimes|required|string'
+            'description' => 'sometimes|required|string',
+            'is_published' => 'sometimes|boolean'
         ]);
 
         $data = $request->only([
             'title',
-            'description'
+            'description',
+            'is_published'
         ]);
 
         $course->update($data);
 
         return response()->json([
-            'message' => 'Course berhasil diupdate',
+            'message' => 'Course updated',
             'data' => $course
         ]);
     }
 
-    public function delete(Request $request, $id)
+    public function destroy(Request $request, $id)
     {
         if (!$request->user() || $request->user()->role !== 'admin') {
             return response()->json([
-                'message' => 'Anda bukan admin'
+                'message' => 'Admin only'
             ], 403);
         }
 
@@ -89,7 +100,7 @@ class CourseController extends Controller
         $course->delete();
 
         return response()->json([
-            'message' => 'Course berhasil dihapus'
+            'message' => 'Course deleted'
         ]);
     }
 }

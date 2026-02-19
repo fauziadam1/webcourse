@@ -70,15 +70,15 @@ class AuthController extends Controller
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'message' => ['Username atau password salah']
-            ]);
+            ], 422);
         }
 
-        // Auth::login($user);
-        $token = $user->createToken('token')->plainTextToken;
+        Auth::login($user);
+        // $token = $user->createToken('token')->plainTextToken;
 
         return response()->json([
             'message' => 'Login berhasil',
-            'token' => $token,
+            // 'token' => $token,
             'data' => $user
         ]);
     }

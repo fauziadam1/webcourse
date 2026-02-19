@@ -15,13 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->text('description')->nullable();
-            $table->enum('type', ['video', 'pdf', 'text', 'quiz']);
-            $table->string('content')->nullable();
-            $table->unsignedInteger('sort_order');
+            $table->text('content');
             $table->timestamps();
-
-            $table->foreignId('quiz_id')->nullable()->constrained('quizzes')->nullOnDelete();
-            $table->foreignId('course_id')->constrained()->cascadeOnDelete();
         });
     }
 
