@@ -8,9 +8,17 @@ use App\Http\Resources\CourseShowUserResource;
 
 class CourseController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $course = Course::where('is_published', true)->get();
+        $user = $request->user();
+
+        $course = Course::where('is_published', true)
+            ->withCount(['sets', 'enrollments'])
+            ->withExists([
+                'enrollments as enrolled' => fn($q) =>
+                $q->where('user_id', $user->id)
+            ])
+            ->get();
 
         return CourseShowUserResource::collection($course);
     }

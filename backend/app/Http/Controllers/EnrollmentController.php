@@ -15,14 +15,25 @@ class EnrollmentController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
             'course_id' => 'required|exists:courses,id'
         ]);
 
-        $enrollment = Enrollment::create($request->only([
-            'user_id',
-            'course_id'
-        ]));
+        $user = $request->user()->id;
+
+        $exists = Enrollment::where('user_id', $user)
+            ->where('course_id', $request->course_id)
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'message' => 'Already enrolled'
+            ], 409);
+        }
+
+        $enrollment = Enrollment::create([
+            'user_id' => $user,
+            'course_id' => $request->course_id
+        ]);
 
         return response()->json([
             'message' => 'Enrolled',
@@ -30,11 +41,15 @@ class EnrollmentController extends Controller
         ], 201);
     }
 
-    public function destroy(Enrollment $enrollment)
+    public function destroy(Request $request, $courseId)
     {
-        $enrollment->delete();
+        $request->user()
+            ->enrollments()
+            ->where('course_id', $courseId)
+            ->delete();
+
         return response()->json([
-            'message' => 'Enrollment removed'
+            'message' => 'Unenrolled'
         ]);
     }
 }

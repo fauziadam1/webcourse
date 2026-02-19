@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\OptionController;
 use App\Http\Controllers\QuestionController;
@@ -36,6 +37,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/question', [QuestionController::class, 'store']);
 
     Route::post('/option', [OptionController::class, 'store']);
+
+    Route::post('/enroll', [EnrollmentController::class, 'store']);
+    Route::delete('/enroll/{courseId}', [EnrollmentController::class, 'destroy']);
 });
 
 Route::post('/register', [AuthController::class, 'register']);
