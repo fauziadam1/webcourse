@@ -8,9 +8,20 @@ use Illuminate\Http\Request;
 
 class LessonController extends Controller
 {
-    public function index()
+    public function show($setId)
     {
-        return response()->json(Lesson::all());
+        $lessons = SetItem::where('set_id', $setId)
+            ->whereNotNull('lesson_id')
+            ->with('lesson')
+            ->orderBy('sort_order')
+            ->get()
+            ->pluck('lesson')
+            ->filter()
+            ->values();
+
+        return response()->json([
+            'data' => $lessons
+        ]);
     }
 
     public function store(Request $request)

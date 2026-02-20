@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\SetResource;
 use App\Models\Set;
+use App\Models\SetItem;
 use Illuminate\Http\Request;
+use App\Http\Resources\SetResource;
 
 class SetController extends Controller
 {
@@ -15,13 +16,92 @@ class SetController extends Controller
         return SetResource::collection($set);
     }
 
-    public function show($courseId)
+    public function show($setId)
+    {
+        $set = Set::with('course')->findOrFail($setId);
+
+        $items = SetItem::where('set_id', $setId)
+            ->with(['lesson', 'quiz'])
+            ->orderBy('sort_order')
+            ->get()
+            ->map(function ($item) {
+                if ($item->lesson_id && $item->lesson) {
+                    return [
+                        'type' => 'lesson',
+                        'id' => $item->lesson->id,
+                        'title' => $item->lesson->title,
+                        'content' => $item->lesson->content,
+                        'sort_order' => $item->sort_order,
+                    ];
+                }
+
+                if ($item->quiz_id && $item->quiz) {
+                    return [
+                        'type' => 'quiz',
+                        'id' => $item->quiz->id,
+                        'title' => $item->quiz->title,
+                        'description' => $item->quiz->description,
+                        'sort_order' => $item->sort_order,
+                    ];
+                }
+
+                return null;
+            })
+            ->filter()
+            ->values();
+
+        return response()->json([
+            'data' => [
+                'id' => $set->id,
+                'title' => $set->title,
+                'course_id' => $set->course_id,
+                'items' => $items,
+            ]
+        ]);
+    }
+
+    public function byCourse($courseId)
     {
         $sets = Set::where('course_id', $courseId)
             ->orderBy('sort_order')
-            ->get();
-
-        return SetResource::collection($sets);
+            ->get()
+            ->map(function ($set) {
+                $items = SetItem::where('set_id', $set->id)
+                    ->with(['lesson', 'quiz'])
+                    ->orderBy('sort_order')
+                    ->get()
+                    ->map(function ($item) {
+                        if ($item->lesson_id && $item->lesson) {
+                            return [
+                                'type' => 'lesson',
+                                'id' => $item->lesson->id,
+                                'title' => $item->lesson->title,
+                                'content' => $item->lesson->content,
+                                'sort_order' => $item->sort_order,
+                            ];
+                        }
+                        if ($item->quiz_id && $item->quiz) {
+                            return [
+                                'type' => 'quiz',
+                                'id' => $item->quiz->id,
+                                'title' => $item->quiz->title,
+                                'description' => $item->quiz->description,
+                                'sort_order' => $item->sort_order,
+                            ];
+                        }
+                        return null;
+                    })
+                    ->filter()
+                    ->values();
+                return [
+                    'id' => $set->id,
+                    'title' => $set->title,
+                    'course_id' => $set->course_id,
+                    'sort_order' => $set->sort_order,
+                    'items' => $items,
+                ];
+            });
+        return response()->json(['data' => $sets]);
     }
 
     public function store(Request $request)

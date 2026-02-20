@@ -12,15 +12,21 @@ class CourseController extends Controller
     {
         $user = $request->user();
 
-        $course = Course::where('is_published', true)
-            ->withCount(['sets', 'enrollments'])
-            ->withExists([
+        $query = Course::where('is_published', true)
+            ->withCount(['sets', 'enrollments']);
+
+        if ($user) {
+            $query->withExists([
                 'enrollments as enrolled' => fn($q) =>
                 $q->where('user_id', $user->id)
-            ])
-            ->get();
+            ]);
+        } else {
+            $query->select('*')->selectRaw('false as enrolled');
+        }
 
-        return CourseShowUserResource::collection($course);
+        $courses = $query->get();
+
+        return CourseShowUserResource::collection($courses);
     }
 
     public function all(Request $request)
