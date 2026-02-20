@@ -1,24 +1,85 @@
 "use client";
 
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogTrigger,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+
+import z from "zod";
+import { toast } from "sonner";
 import { api } from "@/lib/axios";
+import { useForm } from "react-hook-form";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+
 import { SetAdd } from "@/components/set-add";
 import { LessonAdd } from "@/components/lesson-add";
+import { QuizAdd } from "@/components/quiz-add";
+
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { EllipsisVertical, Pencil, Trash2Icon } from "lucide-react";
+
+//////////////////// TYPES ////////////////////
+
+type LessonItem = {
+  type: "lesson";
+  id: string;
+  title: string;
+  content: string;
+  sort_order?: number;
+};
+
+type QuizItem = {
+  type: "quiz";
+  id: string;
+  title: string;
+  description?: string;
+  sort_order?: number;
+};
+
+type ContentItem = LessonItem | QuizItem;
 
 type Set = {
   id: string;
   title: string;
   course_id: string;
   sort_order?: number;
-};
-
-type Lesson = {
-  id: string;
-  title: string;
-  description: string;
-  content: string;
-  sort_order?: number;
+  items: ContentItem[];
 };
 
 type Course = {
@@ -28,26 +89,37 @@ type Course = {
   is_published: boolean;
 };
 
-export default function CourseDetailPage() {
+export default function CourseDetailPageAdmin() {
   const params = useParams<{ id: string }>();
   const CourseId = params.id;
 
-  const [isLoading, SetLoading] = useState(false);
   const [course, setCourse] = useState<Course | null>(null);
   const [sets, setSets] = useState<Set[]>([]);
   const [activeSet, setActiveSet] = useState<Set | null>(null);
-  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [isLoading, setLoading] = useState(false);
+  const [isEditLoading, setEditLoading] = useState(false);
+  const [isDelLoading, setDelLoading] = useState(false);
+  const [editSetId, setEditSetId] = useState<string | null>(null);
+
+  const setSchema = z.object({
+    title: z.string().min(1, "Title wajib diisi"),
+  });
+
+  type SetFormValues = z.infer<typeof setSchema>;
+
+  const setForm = useForm<SetFormValues>({
+    resolver: zodResolver(setSchema),
+    defaultValues: { title: "" },
+  });
 
   useEffect(() => {
     const fetchCourse = async () => {
-      SetLoading(true);
+      setLoading(true);
       try {
         const res = await api.get(`/api/courses/${CourseId}`);
         setCourse(res.data.data);
-      } catch (e) {
-        console.error(e);
       } finally {
-        SetLoading(false);
+        setLoading(false);
       }
     };
 
@@ -55,22 +127,15 @@ export default function CourseDetailPage() {
   }, [CourseId]);
 
   const fetchSets = async () => {
-    SetLoading(true);
+    setLoading(true);
     try {
       const res = await api.get(`/api/courses/${CourseId}/sets`);
-      const data = res.data.data;
+      const data = res.data.data ?? [];
 
       setSets(data);
-
-      if (data.length > 0) {
-        setActiveSet(data[0]);
-      } else {
-        setActiveSet(null);
-      }
-    } catch (e) {
-      console.error(e);
+      setActiveSet(data[0] ?? null);
     } finally {
-      SetLoading(false);
+      setLoading(false);
     }
   };
 
@@ -78,79 +143,114 @@ export default function CourseDetailPage() {
     if (CourseId) fetchSets();
   }, [CourseId]);
 
-  const fetchLessons = async (setId: string) => {
-    SetLoading(true);
+  const handleDeleteSet = async (setId: string) => {
+    setDelLoading(true);
     try {
-      const res = await api.get(`/api/sets/${setId}/lessons`);
-      setLessons(res.data.data);
-    } catch (e) {
-      console.error(e);
+      await api.delete(`/api/set/${setId}`);
+
+      setSets((prev) => prev.filter((s) => s.id !== setId));
+
+      if (activeSet?.id === setId) setActiveSet(null);
+
+      toast.success("Set deleted");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Delete failed");
     } finally {
-      SetLoading(false);
+      setDelLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (activeSet) fetchLessons(activeSet.id);
-  }, [activeSet]);
+  const handleEditSet = async (data: SetFormValues) => {
+    if (!editSetId) return;
+
+    setEditLoading(true);
+
+    try {
+      await api.put(`/api/set/${editSetId}`, data);
+
+      setSets((prev) =>
+        prev.map((s) => (s.id === editSetId ? { ...s, title: data.title } : s)),
+      );
+
+      if (activeSet?.id === editSetId) {
+        setActiveSet((prev) => (prev ? { ...prev, title: data.title } : prev));
+      }
+
+      toast.success("Set updated");
+      setEditSetId(null);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Update failed");
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
   return (
     <div className="container px-10 mx-auto mt-10">
-      <div className="w-full flex gap-10">
-        <div className="w-full space-y-5">
-
+      <div className="flex gap-10">
+        <div className="flex-1 space-y-5">
           {course && (
-            <div className="space-y-2">
-              <h1 className="font-bold text-2xl">{course.title}</h1>
+            <div>
+              <h1 className="text-2xl font-bold">{course.title}</h1>
               <p className="max-w-3xl">{course.description}</p>
             </div>
           )}
-
-          <div className="border rounded-xl p-6 min-h-75 bg-white">
-
+          <div className="border rounded-xl p-6 min-h-100 bg-white">
             {activeSet ? (
               <>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold">
-                    {activeSet.title}
-                  </h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-bold">{activeSet.title}</h2>
 
-                  <LessonAdd
-                    setId={activeSet.id}
-                    onSuccess={() => fetchLessons(activeSet.id)}
-                  />
+                  <div className="flex gap-3">
+                    <LessonAdd setId={activeSet.id} onSuccess={fetchSets} />
+                    <QuizAdd setId={activeSet.id} onSuccess={fetchSets} />
+                  </div>
                 </div>
-                {lessons.length > 0 ? (
+                {isLoading ? (
+                  <Spinner />
+                ) : activeSet.items?.length ? (
                   <div className="space-y-3">
-                    {lessons.map((lesson) => (
+                    {activeSet.items.map((item) => (
                       <div
-                        key={lesson.id}
-                        className="border rounded-lg p-4"
+                        key={`${item.type}-${item.id}`}
+                        className="border rounded-lg p-4 bg-gray-50"
                       >
-                        <h3 className="font-semibold">
-                          {lesson.title}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          {lesson.description}
-                        </p>
+                        {item.type === "lesson" && (
+                          <>
+                            <h3 className="font-semibold">{item.title}</h3>
+                            <p className="text-gray-500 text-justify whitespace-pre-line">
+                              {item.content}
+                            </p>
+                          </>
+                        )}
+                        {item.type === "quiz" && (
+                          <>
+                            <h3 className="font-semibold">
+                              Quiz: {item.title}
+                            </h3>
+                            {item.description && (
+                              <p className="text-gray-500">
+                                {item.description}
+                              </p>
+                            )}
+                            <Button className="mt-2">Kerjakan Quiz</Button>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-400">
-                    Belum ada content di set ini.
-                  </p>
+                  <p className="text-gray-400">Belum ada content di set ini.</p>
                 )}
               </>
             ) : (
-              <p className="text-gray-400">
-                Belum ada set. Tambahkan set terlebih dahulu.
-              </p>
+              <p className="text-gray-400">Belum ada set.</p>
             )}
           </div>
         </div>
-        <div className="w-87.5 border rounded-xl p-4 space-y-5 bg-gray-50">
-
+        <div className="w-[350px] border rounded-xl p-4 space-y-5 bg-gray-50">
           <div className="flex justify-end">
             <SetAdd courseId={CourseId} onSuccess={fetchSets} />
           </div>
@@ -160,21 +260,111 @@ export default function CourseDetailPage() {
               <div
                 key={set.id}
                 onClick={() => setActiveSet(set)}
-                className={`border rounded-lg p-4 cursor-pointer transition
-                  ${
-                    activeSet?.id === set.id
-                      ? "bg-blue-50 border-blue-500"
-                      : "bg-white hover:bg-gray-100"
-                  }`}
+                className={`border rounded-lg p-3 cursor-pointer transition ${
+                  activeSet?.id === set.id
+                    ? "bg-blue-50 border-blue-500"
+                    : "bg-white hover:bg-gray-100"
+                }`}
               >
-                <h1 className="font-semibold text-sm line-clamp-1">
-                  {set.title}
-                </h1>
+                <div className="flex justify-between items-center">
+                  <h1 className="font-semibold text-sm line-clamp-1">
+                    {set.title}
+                  </h1>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <EllipsisVertical className="size-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Action</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <DropdownMenuItem
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              setEditSetId(set.id);
+                              setForm.setValue("title", set.title);
+                            }}
+                          >
+                            <Pencil className="size-4" />
+                            Edit
+                          </DropdownMenuItem>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Edit Set</DialogTitle>
+                            <DialogDescription>
+                              Update set title.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <Form {...setForm}>
+                            <form
+                              onSubmit={setForm.handleSubmit(handleEditSet)}
+                              className="space-y-4"
+                            >
+                              <FormField
+                                control={setForm.control}
+                                name="title"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Title</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <Button type="submit" className="w-full">
+                                {isEditLoading ? <Spinner /> : "Save Changes"}
+                              </Button>
+                            </form>
+                          </Form>
+                        </DialogContent>
+                      </Dialog>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem
+                            onSelect={(e) => e.preventDefault()}
+                          >
+                            {isDelLoading ? (
+                              <Spinner />
+                            ) : (
+                              <Trash2Icon className="text-destructive" />
+                            )}
+                            Delete
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Set?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete this set.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteSet(set.id)}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             ))}
           </div>
         </div>
-
       </div>
     </div>
   );

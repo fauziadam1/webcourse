@@ -51,8 +51,9 @@ import { Spinner } from "./ui/spinner";
 import { CourseAdd } from "./course-add";
 import { useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
-import { EllipsisVertical, Trash2Icon } from "lucide-react";
+import { EllipsisVertical, PencilIcon, Trash2Icon } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Input } from "./ui/input";
 
 type Course = {
   id: number;
@@ -64,39 +65,47 @@ type Course = {
 
 export function CourseList() {
   const [isLoading, SetLoading] = useState(false);
+  const [isEditLoading, SetEditLoading] = useState(false);
   const [isPubLoading, setPubLoading] = useState<number | null>(null);
   const [courses, setCourse] = useState<Course[]>([]);
 
-  const formCourse = z.object({
-    title: z.string().trim().min(1, "The title field is required"),
-    description: z.string().trim().min(1, "The title field is required"),
-    is_published: z.boolean(),
+  const formSchema = z.object({
+    title: z.string().min(1),
+    description: z.string().min(1),
   });
 
-  type FormCourse = z.infer<typeof formCourse>;
+  type FormValues = z.infer<typeof formSchema>;
 
-  const form = useForm<FormCourse>({
-    resolver: zodResolver(formCourse),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       description: "",
-      is_published: false,
     },
   });
 
-  const handleUpdate = async (data: FormCourse) => {
-    SetLoading(true);
-    try {
-      await api.post("/api/course", data);
+  const [editId, setEditId] = useState<number | null>(null);
 
-      toast.success("Course created");
-      form.reset();
+  const handleEdit = async (data: FormValues) => {
+    if (!editId) return;
+    SetEditLoading(true);
+
+    try {
+      await api.put(`/api/course/${editId}`, data);
+
+      setCourse((prev) =>
+        prev.map((prev) => (prev.id === editId ? { ...prev, ...data } : prev)),
+      );
+
+      toast.success("Course updated");
+      setEditId(null);
+      SetEditLoading(false);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       const message =
-        err?.response?.data?.message ?? err.message ?? "Add course failed";
+        err?.response?.data?.message ?? err.message ?? "Update failed";
       toast.error(message);
-      SetLoading(false);
+      SetEditLoading(false);
     }
   };
 
@@ -122,11 +131,13 @@ export function CourseList() {
       await api.delete(`/api/course/${id}`);
       setCourse((prev) => prev.filter((c) => c.id !== id));
       toast.success("Course berhasil dihapus");
+      SetLoading(false);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       const message =
         err?.response?.data?.message ?? err.message ?? "Delete failed";
       toast.error(message);
+      SetLoading(false);
     }
   };
 
@@ -178,7 +189,7 @@ export function CourseList() {
                     disabled={course.is_published || isPubLoading === course.id}
                     onClick={() => handlePublished(course.id)}
                   >
-                    {isPubLoading ? (
+                    {isPubLoading === course.id ? (
                       <Spinner />
                     ) : course.is_published ? (
                       "Published"
@@ -242,7 +253,7 @@ export function CourseList() {
                             }}
                             className="cursor-pointer"
                           >
-                            <PencilIcon className="mr-2 size-4" />
+                            <PencilIcon className="size-4" />
                             Edit
                           </DropdownMenuItem>
                         </DialogTrigger>
@@ -287,6 +298,7 @@ export function CourseList() {
                                 />
 
                                 <Button type="submit" className="w-full">
+                                  {isEditLoading ? <Spinner /> : ""}
                                   Save Changes
                                 </Button>
                               </div>

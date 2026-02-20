@@ -23,9 +23,9 @@ export default function AdminLayout({ children }: PropsWithChildren) {
   }
 
   return (
-    <div>
+    <>
       <Header />
-      {children}
-    </div>
+      <div className="py-10">{children}</div>
+    </>
   );
 }

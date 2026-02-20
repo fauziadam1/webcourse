@@ -6,6 +6,7 @@ import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuLink,
+  NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import { Button } from "./ui/button";
 import { HeaderUser } from "./header-user";
@@ -14,36 +15,40 @@ export function Header() {
   const { user } = useAuthUser();
 
   return (
-    <div className="border-b py-5">
-      <div className="container px-10 mx-auto flex justify-between">
-        <Link href={"/"}>
-          <h1 className="font-bold text-2xl">Moodle</h1>
+    <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background">
+      <div className="container mx-auto flex h-16 items-center justify-between px-10">
+        <Link href="/" className="text-2xl font-bold">
+          Moodle
         </Link>
-        <NavigationMenu className="list-none font-semibold space-x-5">
-          <NavigationMenuItem>
-            <NavigationMenuLink href="/">
-              Home
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <NavigationMenuLink>
-              Course
-            </NavigationMenuLink>
-          </NavigationMenuItem>
+        <NavigationMenu>
+          <NavigationMenuList className="font-semibold space-x-6">
+            <NavigationMenuItem>
+              <NavigationMenuLink asChild>
+                <Link href="/">Home</Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+
+            <NavigationMenuItem>
+              <NavigationMenuLink asChild>
+                <Link href="/courses">Course</Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+          </NavigationMenuList>
         </NavigationMenu>
         {user ? (
           <HeaderUser user={user} />
         ) : (
-          <div className="flex items-center gap-5">
-            <Button className="rounded-xl">
-              <Link href={"/login"}>Login</Link>
+          <div className="flex items-center gap-3">
+            <Button asChild className="rounded-xl">
+              <Link href="/login">Login</Link>
             </Button>
-            <Button variant="outline" className="rounded-xl">
-              <Link href={"/register"}>Register</Link>
+
+            <Button asChild variant="outline" className="rounded-xl">
+              <Link href="/register">Register</Link>
             </Button>
           </div>
         )}
       </div>
-    </div>
+    </header>
   );
 }

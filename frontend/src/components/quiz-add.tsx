@@ -28,50 +28,49 @@ import { api } from "@/lib/axios";
 import { toast } from "sonner";
 import { PlusIcon } from "lucide-react";
 
-export function LessonAdd({
+export function QuizAdd({
   setId,
   onSuccess,
 }: {
   setId: string;
   onSuccess?: () => void;
 }) {
-  const [isLoading, SetLoading] = useState(false);
+  const [isLoading, setLoading] = useState(false);
 
-  const formLesson = z.object({
-    title: z.string().trim().min(1, "Title is required"),
-    description: z.string().trim(),
-    content: z.string().trim().min(1, "Content is required"),
+  const formSchema = z.object({
+    title: z.string().trim().min(1, "The title field is required"),
+    description: z.string().optional(),
   });
 
-  type FormLesson = z.infer<typeof formLesson>;
+  type FormValues = z.infer<typeof formSchema>;
 
-  const form = useForm<FormLesson>({
-    resolver: zodResolver(formLesson),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-      content: "",
+      description: "",
     },
   });
 
-  const addLesson = async (data: FormLesson) => {
-    SetLoading(true);
+  const addQuiz = async (data: FormValues) => {
+    setLoading(true);
+
     try {
-      await api.post("/api/lesson", {
+      await api.post("/api/quiz", {
         ...data,
         set_id: setId,
       });
 
-      toast.success("Lesson created");
-
+      toast.success("Quiz created");
       onSuccess?.();
       form.reset();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       const message =
-        err?.response?.data?.message ?? err.message ?? "Add lesson failed";
+        err?.response?.data?.message ?? err.message ?? "Add quiz failed";
       toast.error(message);
     } finally {
-      SetLoading(false);
+      setLoading(false);
     }
   };
 
@@ -80,18 +79,16 @@ export function LessonAdd({
       <DialogTrigger asChild>
         <Button className="rounded-xl">
           <PlusIcon />
-          New Lesson
+          New Quiz
         </Button>
       </DialogTrigger>
-
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add new lesson</DialogTitle>
-          <DialogDescription>Create lesson inside this set</DialogDescription>
+          <DialogTitle>Add new quiz</DialogTitle>
+          <DialogDescription>Create quiz inside this set</DialogDescription>
         </DialogHeader>
-
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(addLesson)}>
+          <form onSubmit={form.handleSubmit(addQuiz)}>
             <div className="space-y-5">
               <FormField
                 control={form.control}
@@ -108,12 +105,12 @@ export function LessonAdd({
               />
               <FormField
                 control={form.control}
-                name="content"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Content</FormLabel>
+                    <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea rows={5} {...field} />
+                      <Textarea rows={4} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -121,7 +118,7 @@ export function LessonAdd({
               />
               <Button type="submit" className="w-full">
                 {isLoading && <Spinner />}
-                Add Lesson
+                Add Quiz
               </Button>
             </div>
           </form>

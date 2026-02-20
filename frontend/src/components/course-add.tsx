@@ -115,7 +115,7 @@ export function CourseAdd({
                         </FormItem>
                       )}
                     />
-                    <Button type="submit">
+                    <Button type="submit" className="w-full">
                       {isLoading ? <Spinner /> : ""}Add
                     </Button>
                   </div>
