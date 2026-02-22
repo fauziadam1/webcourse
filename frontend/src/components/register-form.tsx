@@ -16,6 +16,7 @@ import { useForm } from "react-hook-form";
 import { PasswordInput } from "./ui/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PasswordValidation } from "@/lib/password-validation";
+import Link from "next/link";
 import { Button } from "./ui/button";
 import { useState } from "react";
 import { Spinner } from "./ui/spinner";
@@ -76,8 +77,8 @@ export function RegisterForm() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-7">
           <div className="flex flex-col gap-1">
-            <h1 className="font-bold text-2xl">Sign Up</h1>
-            <p className="text-xs text-gray-500">Welcome to Moodle</p>
+            <h1 className="font-bold text-2xl">Register</h1>
+            <p className="text-xs text-gray-500">Welcome to WebCourse</p>
           </div>
           <div className="space-y-5">
             <FormField
@@ -132,9 +133,15 @@ export function RegisterForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit">
-              {isLoading ? <Spinner /> : ""} Sign In
+            <Button type="submit" className="w-full rounded-xl">
+              {isLoading ? <Spinner /> : ""} Register
             </Button>
+          </div>
+          <div className="text-sm text-center">
+            Already have an account?{" "}
+            <Link href="/login" className="underline underline-offset-4">
+              Login
+            </Link>
           </div>
         </form>
       </Form>

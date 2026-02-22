@@ -39,7 +39,6 @@ export function LessonAdd({
 
   const formLesson = z.object({
     title: z.string().trim().min(1, "Title is required"),
-    description: z.string().trim(),
     content: z.string().trim().min(1, "Content is required"),
   });
 

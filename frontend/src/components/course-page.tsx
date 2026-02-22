@@ -78,7 +78,7 @@ export default function CoursePage() {
   return (
     <div className="min-h-screen bg-muted/40">
       <section className="border-b bg-background">
-        <div className="mx-auto max-w-6xl px-6 py-12">
+        <div className="container mx-auto px-10 py-12">
           <div className="flex items-center gap-3 mb-4">
             <BookOpen className="w-8 h-8 text-primary" />
             <h1 className="text-3xl font-bold">
@@ -95,11 +95,9 @@ export default function CoursePage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-
         </div>
       </section>
-      <section className="mx-auto max-w-6xl px-6 py-10">
-
+      <section className="container mx-auto px-10 py-10">
         {isLoading ? (
           <div className="flex justify-center py-20">
             <Spinner className="size-8" />
@@ -123,7 +121,7 @@ export default function CoursePage() {
                     {course.description}
                   </CardDescription>
                 </CardHeader>
-                <CardFooter className="flex flex-col gap-4 items-start">
+                <CardFooter className="flex flex-col gap-4 mt-auto items-start">
                   <div className="flex gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1 bg-muted px-2 py-1 rounded">
                       <BookMarked className="size-4" />
@@ -156,7 +154,6 @@ export default function CoursePage() {
             ))}
           </div>
         )}
-
       </section>
     </div>
   );

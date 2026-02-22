@@ -9,21 +9,21 @@ import {
   FormField,
 } from "./ui/form";
 import z from "zod";
+import Link from "next/link";
 import { toast } from "sonner";
 import { api } from "@/lib/axios";
 import { Input } from "./ui/input";
 import { useForm } from "react-hook-form";
 import { PasswordInput } from "./ui/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PasswordValidation } from "@/lib/password-validation";
 import { Button } from "./ui/button";
 import { useState } from "react";
 import { Spinner } from "./ui/spinner";
 import { useRouter } from "next/navigation";
 
 export function LoginForm() {
-    const router = useRouter();
-    const [isLoading, SetLoading] = useState(false);
+  const router = useRouter();
+  const [isLoading, SetLoading] = useState(false);
 
   const formSchema = z.object({
     username: z.string().trim().min(1, "The username field is required"),
@@ -62,7 +62,7 @@ export function LoginForm() {
   return (
     <div className="w-110 border px-10 py-10 rounded-xl">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-7">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="flex flex-col gap-1">
             <h1 className="font-bold text-2xl">Login</h1>
             <p className="text-xs text-gray-500">
@@ -96,9 +96,13 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit">
-              {isLoading ? <Spinner /> : ""} Login
-            </Button>
+            <Button type="submit" className="w-full rounded-xl">{isLoading ? <Spinner /> : ""} Login</Button>
+          </div>
+          <div className="text-sm text-center">
+            Don&apos;t have an account?{" "}
+            <Link href="/register" className="underline underline-offset-4">
+              Register
+            </Link>
           </div>
         </form>
       </Form>

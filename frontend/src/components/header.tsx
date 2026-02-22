@@ -18,7 +18,7 @@ export function Header() {
     <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background">
       <div className="container mx-auto flex h-16 items-center justify-between px-10">
         <Link href="/" className="text-2xl font-bold">
-          Moodle
+          WebCourse
         </Link>
         <NavigationMenu>
           <NavigationMenuList className="font-semibold space-x-6">
@@ -27,7 +27,6 @@ export function Header() {
                 <Link href="/">Home</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
-
             <NavigationMenuItem>
               <NavigationMenuLink asChild>
                 <Link href="/course">Course</Link>

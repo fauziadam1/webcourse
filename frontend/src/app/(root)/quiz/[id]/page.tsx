@@ -90,7 +90,7 @@ export default function QuizUserPage() {
 
       if (data.passed) {
         const courseId = searchParams.get("course_id");
-        toast.success(`Selamat! Kamu lulus dengan nilai ${data.score}% 🎉`);
+        toast.success(`Selamat! Kamu lulus`);
         router.push(courseId ? `/course/${courseId}` : "/");
       } else {
         setResult(data);
@@ -115,7 +115,7 @@ export default function QuizUserPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <Spinner />
+        <Spinner className="size-8"/>
       </div>
     );
   }
@@ -219,7 +219,7 @@ export default function QuizUserPage() {
                     className={`w-full text-left px-4 py-3 rounded-lg border text-sm transition
                       ${
                         isSelected
-                          ? "bg-blue-50 border-blue-500 font-medium text-blue-700"
+                          ? "bg-blue-50 border-blue-500 font-medium text-blue-500"
                           : "bg-gray-50 border-gray-200 hover:bg-gray-100 text-gray-700"
                       }
                       ${result ? "cursor-default" : "cursor-pointer"}

@@ -124,7 +124,7 @@ export default function CourseDetailUserPage() {
           <div className="border rounded-xl p-6 min-h-100 bg-white">
             {isLoading ? (
               <div className="flex justify-center py-20">
-                <Spinner />
+                <Spinner className="size-8"/>
               </div>
             ) : activeSet ? (
               <>
